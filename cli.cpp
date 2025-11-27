@@ -38,22 +38,32 @@ string toLower(const string& str) {
 // Offline synonym/related terms mapping (DSA domain specific)
 map<string, vector<string>> buildSynonymMap() {
     map<string, vector<string>> synonyms;
-    synonyms["queue"] = {"q", "queues", "enqueue", "dequeue", "fifo"};
-    synonyms["stack"] = {"stk", "stacks", "push", "pop", "lifo"};
-    synonyms["tree"] = {"trees", "binary", "bst", "binarytree", "node"};
-    synonyms["sort"] = {"sorting", "arrange", "order", "sorted"};
-    synonyms["search"] = {"searching", "find", "lookup", "locate"};
-    synonyms["linked"] = {"list", "linkedlist", "link", "node"};
-    synonyms["graph"] = {"graphs", "bfs", "dfs", "dijkstra", "prim", "kruskal"};
-    synonyms["hash"] = {"hashing", "hashtable", "hashmap", "map"};
-    synonyms["circular"] = {"circle", "cyclic", "round", "circ"};
-    synonyms["array"] = {"arr", "arrays", "list"};
-    synonyms["string"] = {"str", "strings", "text", "char"};
-    synonyms["merge"] = {"mergesort", "merging", "combine"};
-    synonyms["quick"] = {"quicksort", "qsort"};
-    synonyms["bubble"] = {"bubblesort"};
-    synonyms["selection"] = {"selectionsort"};
-    synonyms["insertion"] = {"insertionsort"};
+    synonyms["queue"] = {"q", "que", "queues", "enqueue", "dequeue", "fifo", "enq", "deq"};
+    synonyms["stack"] = {"stk", "stacks", "push", "pop", "lifo", "stac"};
+    synonyms["tree"] = {"trees", "binary", "bst", "binarytree", "node", "tre", "btree"};
+    synonyms["sort"] = {"sorting", "arrange", "order", "sorted", "srt", "organize"};
+    synonyms["search"] = {"searching", "find", "lookup", "locate", "srch", "seek"};
+    synonyms["linked"] = {"list", "linkedlist", "link", "node", "ll", "llist"};
+    synonyms["graph"] = {"graphs", "bfs", "dfs", "dijkstra", "prim", "kruskal", "grph", "network"};
+    synonyms["hash"] = {"hashing", "hashtable", "hashmap", "map", "hsh", "hashset"};
+    synonyms["circular"] = {"circle", "cyclic", "round", "circ", "cicular", "circulr"};
+    synonyms["array"] = {"arr", "arrays", "list", "arry"};
+    synonyms["string"] = {"str", "strings", "text", "char", "strng"};
+    synonyms["merge"] = {"mergesort", "merging", "combine", "mrg", "join"};
+    synonyms["quick"] = {"quicksort", "qsort", "qck"};
+    synonyms["bubble"] = {"bubblesort", "bbl"};
+    synonyms["selection"] = {"selectionsort", "slct"};
+    synonyms["insertion"] = {"insertionsort", "insrt"};
+    synonyms["duplicate"] = {"duplicates", "repeat", "repeated", "dup", "same"};
+    synonyms["interleave"] = {"interleaving", "alternate", "mix", "shuffle"};
+    synonyms["reverse"] = {"reversing", "backward", "invert", "rev"};
+    synonyms["traverse"] = {"traversal", "walk", "visit", "iteration"};
+    synonyms["minimum"] = {"min", "smallest", "least"};
+    synonyms["maximum"] = {"max", "largest", "greatest"};
+    synonyms["spanning"] = {"mst", "tree", "span"};
+    synonyms["shortest"] = {"short", "minimal", "minimum", "path"};
+    synonyms["binary"] = {"bin", "two", "binry"};
+    synonyms["nonrepeating"] = {"non-repeating", "unique", "first", "distinct"};
     return synonyms;
 }
 
@@ -104,6 +114,107 @@ float ngramSimilarity(const string& w1, const string& w2) {
     }
     
     return (s1.empty() || s2.empty()) ? 0 : (2.0 * common) / (s1.size() + s2.size());
+}
+
+// Soundex phonetic encoding (for sound-alike words)
+string soundex(const string& word) {
+    if (word.empty()) return "";
+    
+    string result(1, toupper(word[0]));
+    string code = "01230120022455012623010202";
+    
+    char prev = code[toupper(word[0]) - 'A'];
+    
+    for (size_t i = 1; i < word.length() && result.length() < 4; i++) {
+        char c = toupper(word[i]);
+        if (!isalpha(c)) continue;
+        
+        char curr = code[c - 'A'];
+        if (curr != '0' && curr != prev) {
+            result += curr;
+        }
+        prev = curr;
+    }
+    
+    while (result.length() < 4) result += '0';
+    return result;
+}
+
+// Check if two words sound similar
+bool soundsLike(const string& w1, const string& w2) {
+    if (w1.length() < 4 || w2.length() < 4) return false;
+    return soundex(w1) == soundex(w2);
+}
+
+// Pattern matching for common DSA question structures
+int detectQuestionPattern(const string& input, const string& question) {
+    string lowerInput = toLower(input);
+    string lowerQuestion = toLower(question);
+    int score = 0;
+    
+    // Pattern 1: "implement X" or "write program for X"
+    if ((lowerInput.find("implement") != string::npos || lowerInput.find("write") != string::npos) &&
+        (lowerQuestion.find("implement") != string::npos || lowerQuestion.find("write") != string::npos)) {
+        score += 40;
+    }
+    
+    // Pattern 2: Operation mentions (insert, delete, search, sort, etc.)
+    vector<string> operations = {"insert", "delete", "search", "sort", "traverse", "reverse", "merge"};
+    for (const auto& op : operations) {
+        if (lowerInput.find(op) != string::npos && lowerQuestion.find(op) != string::npos) {
+            score += 30;
+        }
+    }
+    
+    // Pattern 3: Data structure + operation combinations
+    if ((lowerInput.find("queue") != string::npos && lowerInput.find("sort") != string::npos) &&
+        (lowerQuestion.find("queue") != string::npos && lowerQuestion.find("sort") != string::npos)) {
+        score += 60;
+    }
+    
+    // Pattern 4: Algorithm names
+    vector<string> algos = {"dijkstra", "bfs", "dfs", "kruskal", "prim", "quicksort", "mergesort", "binary search"};
+    for (const auto& algo : algos) {
+        if (lowerInput.find(algo) != string::npos && lowerQuestion.find(algo) != string::npos) {
+            score += 80;
+        }
+    }
+    
+    return score;
+}
+
+// Bigram (word pairs) matching for context
+float bigramSimilarity(const vector<string>& words1, const vector<string>& words2) {
+    if (words1.size() < 2 || words2.size() < 2) return 0;
+    
+    set<string> bigrams1, bigrams2;
+    for (size_t i = 0; i < words1.size() - 1; i++) {
+        bigrams1.insert(words1[i] + " " + words1[i+1]);
+    }
+    for (size_t i = 0; i < words2.size() - 1; i++) {
+        bigrams2.insert(words2[i] + " " + words2[i+1]);
+    }
+    
+    int common = 0;
+    for (const auto& bg : bigrams1) {
+        if (bigrams2.count(bg)) common++;
+    }
+    
+    return bigrams1.empty() ? 0 : (float)common / bigrams1.size() * 100;
+}
+
+// Word position importance (early words matter more)
+float positionWeightedMatch(const vector<string>& userWords, const vector<string>& qWords) {
+    float score = 0;
+    for (size_t i = 0; i < userWords.size(); i++) {
+        float weight = 1.0 / (1.0 + i * 0.3); // Decay factor
+        for (const auto& qw : qWords) {
+            if (userWords[i] == qw) {
+                score += 50 * weight;
+            }
+        }
+    }
+    return score;
 }
 
 // Extract words from a string (with stop words removal)
@@ -208,7 +319,16 @@ float advancedSimilarity(const string& userInput, const Question& q, const map<s
         }
     }
     
-    // 5. Keyword density bonus
+    // 5. Phonetic matching (sounds-like)
+    for (const auto& uw : userWords) {
+        for (const auto& qw : questionWords) {
+            if (soundsLike(uw, qw)) {
+                score += 45;
+            }
+        }
+    }
+    
+    // 6. Keyword density bonus
     if (!q.keywords.empty()) {
         for (const auto& uw : expandedUserWords) {
             for (const auto& kw : q.keywords) {
@@ -217,14 +337,14 @@ float advancedSimilarity(const string& userInput, const Question& q, const map<s
         }
     }
     
-    // 6. TF-IDF style weighting (rare words matter more)
+    // 7. TF-IDF style weighting (rare words matter more)
     for (const auto& uw : userWords) {
         if (q.wordFreq.count(uw)) {
             score += 60.0 / (1 + log(q.wordFreq.at(uw)));
         }
     }
     
-    // 7. Query coverage bonus (how much of user input is matched)
+    // 8. Query coverage bonus (how much of user input is matched)
     float coverage = 0;
     for (const auto& uw : userWords) {
         for (const auto& qw : questionWords) {
@@ -235,6 +355,20 @@ float advancedSimilarity(const string& userInput, const Question& q, const map<s
         }
     }
     score += (coverage / userWords.size()) * 50;
+    
+    // 9. Pattern-based matching (question structure)
+    score += detectQuestionPattern(userInput, q.question);
+    
+    // 10. Bigram context matching (word pairs)
+    score += bigramSimilarity(userWords, questionWords);
+    
+    // 11. Position-weighted matching (first words matter more)
+    score += positionWeightedMatch(userWords, questionWords);
+    
+    // 12. Length penalty (very short queries get penalty)
+    if (userWords.size() == 1 && userWords[0].length() < 4) {
+        score *= 0.7;
+    }
     
     return score;
 }
@@ -341,6 +475,13 @@ int main() {
     int bestIdx = scores[0].second;
 
     if (bestScore > 10) {  // Minimum threshold
+        // Log query for future improvements (optional)
+        ofstream logFile("query_log.txt", ios::app);
+        if (logFile.is_open()) {
+            logFile << userInput << " | " << questions[bestIdx].id << " | " << bestScore << "\n";
+            logFile.close();
+        }
+        
         cout << "\n" << string(60, '=') << "\n";
         cout << "BEST MATCH (Confidence: " << (int)min(100.0f, bestScore/5) << "%)\n";
         cout << string(60, '=') << "\n";
